@@ -158,6 +158,8 @@ func startEurekaMonitor(oldIns map[string]*EurekaConfig, newIns map[string]*Eure
 			}
 		}
 	}
+	status_cache = make(map[string][]*EurekaInstance) 		//clean status cache
+	app_stat_metrics.Reset()
 	time.Sleep(time.Millisecond * 100)
 	for _, ins := range newIns {
 		ch := make(chan int, 1)
