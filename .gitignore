@@ -1,0 +1,33 @@
+# Default ignored files
+/shelf/
+/workspace.xml
+# Editor-based HTTP Client requests
+/httpRequests/
+# Datasource local storage ignored files
+/dataSources/
+/dataSources.local.xml
+
+.DS_Store
+Thumbs.db
+
+# vscode ignore
+.vscode
+.idea
+
+# temp ignore
+*.log
+*.cache
+*.diff
+*.patch
+*.tmp
+temp
+
+# bin ignore
+bin
+*.exe
+
+# bind9 tmp files
+named.*
+domain.db
+zone_*%
+eureka-exporter
