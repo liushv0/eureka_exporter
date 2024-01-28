@@ -1,11 +1,16 @@
-port: 9109
-metadata:     #metadata 中的这些key将会被放入到指标中, 调整这块的数据需要重启生效, 不应与 "eureka_instance", "eureka_application", "eureka_hostname", "eureka_status" 重复
-  - hostname
-  - branch
+port: 80
+metadata: #optional, metadata中的这些key将会假如到指标labels中, 调整需要重启生效, 会被附加前缀: eureka_meta_xxx
+  - custom_meta_key1 #其中包含的 - 会被替换为 _
+  - custom_meta_key2 #如果各个eureka实例中需要获取不同的metadata key, merge后都写这里即可
+  - custom_meta_key3
 eurekas:
-  - urls: http://eureka1.domain.com/,http://eureka2.domain.com/  #多个实例地址逗号分隔,当前集群里的eureka实例url,会同时读取这些实例的注册信息并互相覆盖
-    name: instance_1    #每个集群的name应当不同
+  - urls: http://eureka1.domain.com/,http://eureka2.domain.com/  #如果设置多个URL则视为一个eureka集群,并同时从各个URL中拉取数据
+    name: instance_1    #不可重复
     pullInterval: 30s   #注册信息拉取周期
-#  - urls: http://eureka.domain-xx.com/
-#    name: instance_2
-#    pullInterval: 10s
+  - urls: http://eureka3.domain.com/ #如果设置多个URL则视为一个eureka集群,并同时从各个URL中拉取数据
+    name: instance_1    #不可重复
+    pullInterval: 30s   #注册信息拉取周期
+    security:   #optional, only supported basic security
+      basic:
+        user: user_name
+        password: pwd
