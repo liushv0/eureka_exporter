@@ -19,7 +19,7 @@ import (
 
 var cfg_file = flag.String("config.file", "./config.yaml", "path of config file")
 var app_stat_metrics *prometheus.GaugeVec
-var common_labels = []string{"eureka_instance", "eureka_application", "eureka_hostname", "eureka_status"}
+var common_labels = []string{"eureka_instance", "eureka_application", "eureka_app_hostname", "eureka_app_status", "eureka_url"}
 var extend_labels []string
 var eureka_map = make(map[string]*EurekaConfig)
 var status_cache = make(map[string][]*EurekaInstance)
@@ -58,9 +58,15 @@ func main() {
 
 	var labels []string
 	labels = append(labels, common_labels...)
-	labels = append(labels, extend_labels...)
+	if len(extend_labels) > 0 {
+		for _, el := range extend_labels {
+			l := strings.ReplaceAll(el, "-", "_")
+			l = "eureka_meta_" + l
+			labels = append(labels, l)
+		}
+	}
 	var metric = prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "eureka_app_status", Help: "app status in eureka"}, labels)
+		Name: "eureka_app_status", Help: "app register status on eureka"}, labels)
 
 	register := prometheus.NewRegistry()
 	register.MustRegister(metric)
@@ -90,15 +96,6 @@ func main() {
 func checkConfig(cfg *Config) (result bool, msg string) {
 	if len(cfg.Port) <= 0 {
 		cfg.Port = "9109"
-	}
-	if len(cfg.ExtendLabels) > 0 {
-		for _, el := range cfg.ExtendLabels {
-			for _, cl := range common_labels {
-				if el == cl {
-					return false, "label name " + cl + " has be used..."
-				}
-			}
-		}
 	}
 	if len(cfg.Eurekas) == 0 {
 		return false, "eureka instance config is empty...exit now"
@@ -281,14 +278,14 @@ func getAppStat(url, name string, sec *Security) {
 	for _, app := range eureka_resp.Applications.ApplicationList {
 		for _, ins := range app.Instances {
 			ins_list = append(ins_list, ins)
-			values := getValues(name, ins)
+			values := getValues(name, url, ins)
 			app_stat_metrics.WithLabelValues(values...).Set(1)
 		}
 	}
 
 	offline := offlineInstance(url, ins_list)
 	for _, ins := range offline {
-		values := getValues(name, ins)
+		values := getValues(name, url, ins)
 		app_stat_metrics.DeleteLabelValues(values...)
 	}
 	updateCache(url, ins_list)
@@ -333,8 +330,8 @@ func updateCache(url string, ins_new []*EurekaInstance) {
 	status_cache[url] = ins_new
 }
 
-func getValues(name string, ins *EurekaInstance) []string {
-	values := []string{name, ins.App, ins.HostName, ins.Status}
+func getValues(name, url string, ins *EurekaInstance) []string {
+	values := []string{name, ins.App, ins.HostName, ins.Status, url}
 	for _, key := range extend_labels {
 		v := ins.MetaInfo[key]
 		if len(v) == 0 {
