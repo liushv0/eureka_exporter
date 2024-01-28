@@ -54,3 +54,29 @@ spec:
             defaultMode: 420
             name: eureka-exporter-config
           name: config-yaml
+
+---
+apiVersion: v1
+data:
+  config.yaml: |-
+    port: 80
+    metadata: #optional, metadata中的这些key将会假如到指标labels中, 调整需要重启生效, 会被附加前缀: eureka_meta_xxx
+      - custom_meta_key1 #其中包含的 - 会被替换为 _
+      - custom_meta_key2 #如果各个eureka实例中需要获取不同的metadata key, merge后都写这里即可
+      - custom_meta_key3
+    eurekas:
+      - urls: http://eureka1.domain.com/,http://eureka2.domain.com/  #如果设置多个URL则视为一个eureka集群,并同时从各个URL中拉取数据
+        name: instance_1    #不可重复
+        pullInterval: 30s   #注册信息拉取周期
+      - urls: http://eureka3.domain.com/ #如果设置多个URL则视为一个eureka集群,并同时从各个URL中拉取数据
+        name: instance_1    #不可重复
+        pullInterval: 30s   #注册信息拉取周期
+        security: #optional, only supported basic security
+          basic:
+            user: user_name
+            password: pwd
+
+kind: ConfigMap
+metadata:
+  name: eureka-exporter-config
+  namespace: default
